@@ -126,12 +126,15 @@ See `PROVENANCE.md` for the full verified-vs-reconstructed boundary.
 
 ## Dataset & reproducibility
 
-- **Dataset**: BanglaCalamityMMD (Mendeley `7dggbjn5sd`). The contest test set
-  corresponds to the dataset's test+validation splits. Download instructions in
-  `data/README.md`.
+- **Dataset**: a custom multimodal Bengali disaster dataset assembled by the
+  contest host for *Intra CUET ML Contest 2.0*. It is proprietary to the
+  organizers and is **not redistributed here** (not even the fold file, which
+  embeds the host's captions/labels). Obtain it from the official contest page;
+  see `data/README.md`.
 - **Reproducibility**: OOF CV result is the primary metric. The test arrays in
   `artifacts/` were produced by the same trained models. Post-processing rules
-  are logged to `results/tables/applied_corrections.csv`.
+  are logged to `results/tables/applied_corrections.csv`. Regenerate the
+  canonical folds locally with `make folds`.
 - **Honesty**: text post-processing (emoji map + keyword guard) is labeled as
   post-processing in `PROVENANCE.md` — it is not part of the model pipeline.
 

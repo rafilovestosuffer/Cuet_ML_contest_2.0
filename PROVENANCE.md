@@ -101,8 +101,12 @@ bias bootstrap-stable **0.99557** · final report macro-F1 **0.9956**.
 
 ## Artifact provenance
 
-Frozen `.npy` arrays in `artifacts/` were produced on the BanglaCalamityMMD
-dataset (Mendeley `7dggbjn5sd`); the contest test set corresponds to the
-dataset's test+validation splits. The three BanglaBERT-base OOF files in the raw
-zip are byte-identical (multi-seed averaging applied before saving). The partial
-EVA-02 file (F1=0.687, 3 folds) is excluded from the canonical set.
+Frozen `.npy` arrays in `artifacts/` were produced on the contest's **custom
+host-assembled** Bengali disaster dataset (proprietary to the organizers; not
+redistributed here — see `data/README.md`). The three BanglaBERT-base OOF files
+in the raw zip are byte-identical (multi-seed averaging applied before saving).
+The partial EVA-02 file (F1=0.687, 3 folds) is excluded from the canonical set.
+
+The fold file (`data/folds/folds_canonical.csv`) embeds the host's captions and
+labels, so it is **git-ignored** and regenerated locally via `make folds` rather
+than committed.

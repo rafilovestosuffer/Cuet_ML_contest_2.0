@@ -3,10 +3,14 @@ kaggle.json
 .env
 *.key
 
-# Raw dataset — download via data/README.md; never commit images or CSVs
+# Host dataset — proprietary, custom-combined by the contest organizers.
+# Never commit any of it: raw CSVs, images, or the fold file (which embeds the
+# host's captions + labels). Regenerate folds locally via `make folds`.
 data/raw/
 data/Train/
 data/Test/
+data/folds/
+data/**/*.csv
 *.jpg
 *.jpeg
 *.png

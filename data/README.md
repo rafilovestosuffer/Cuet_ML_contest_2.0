@@ -1,39 +1,42 @@
 # Data
 
-## Source & provenance (read this)
-This competition uses the **BanglaCalamityMMD** benchmark:
+## Source & provenance
 
-> BanglaCalamityMMD: A Comprehensive Benchmark Dataset for Multimodal Disaster
-> Identification in the Low-Resource Bangla Language. Mendeley Data,
-> doi:10.17632/7dggbjn5sd.1 ; *Int. J. Disaster Risk Reduction*, 2025.
+The dataset for this contest is a **custom multimodal Bengali disaster dataset
+assembled by the contest host** specifically for the *Intra CUET ML Contest 2.0*.
+It is a host-curated combination and is **proprietary to the organizers**.
 
-The published dataset has **7,903** instances across 8 categories, split into
-**6,323 train / 790 test / 790 validation**. The contest exposes **6,323 train**
-and **1,580 test** rows — the contest test set corresponds to the dataset's
-**test + validation** splits combined. We report leakage-free 5-fold
-cross-validation (OOF) on the training split as our primary metric.
+- It is **not** a redistribution of any single public benchmark, and no public
+  provenance (DOI, external split counts, etc.) is claimed here.
+- The dataset — including the image–caption pairs, the category labels, and the
+  canonical fold assignments derived from them — is **not committed to this
+  repository** and is **not redistributed**.
+- Obtain the data only from the official contest page.
 
-The dataset is the property of its original authors under its own license and is
-**not redistributed here**. Download it from Mendeley (or the contest page) and
-place it as below.
+## Expected local layout (not committed)
 
-## Expected layout (not committed)
 ```
 data/
 ├── raw/
 │   ├── Disaster_train.csv      # columns: image_id, context, category
 │   ├── Disaster_test.csv       # columns: image_id, context
 │   ├── sample_submission.csv
-│   ├── Train/                  # training images (filename prefix = class)
-│   └── Test/                   # test images (anonymized: test_0001.jpg ...)
-└── folds/folds_canonical.csv   # committed: the frozen 5-fold split
+│   ├── Train/                  # training images
+│   └── Test/                   # test images
+└── folds/folds_canonical.csv   # regenerated locally (see below) — NOT committed
 ```
 
-## Build the folds
-```
+## Regenerate the canonical 5-fold split
+
+The split is deterministic (`StratifiedKFold`, shuffle, seed 42), so anyone with
+the host-provided training CSV can reproduce `folds_canonical.csv` identically:
+
+```bash
+make folds
+# or:
 PYTHONPATH=src python -c "from disaster.data.folds import build_folds; build_folds('data/raw/Disaster_train.csv')"
 ```
 
-## Note on filenames
-Training image filenames embed the class (`drought_122.jpg`); test images are
-anonymized. We do **not** use filenames as a feature at inference.
+Because the fold file embeds the host's captions and labels, it is treated as
+host data and is git-ignored — regenerate it locally rather than expecting it in
+the repo.
