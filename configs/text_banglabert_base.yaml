@@ -1,0 +1,12 @@
+name: text_banglabert_base
+modality: text
+model_name: csebuetnlp/banglabert
+max_len: 256
+pooling: mean
+loss: {type: focal_label_smoothing, gamma: 2.0, smoothing: 0.05}
+optimizer: {type: adamw, lr_backbone: 8.0e-6, lr_head: 5.0e-4, weight_decay: 0.01}
+scheduler: {type: cosine, warmup_ratio: 0.10}
+train: {epochs: 4, micro_batch: 8, grad_accum: 4, amp: true}
+folds: data/folds/folds_canonical.csv
+seeds: [123, 456]
+oof_out: artifacts/oof_banglabert_base.npy

@@ -1,0 +1,15 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.10"}
+      - name: Install minimal deps
+        run: pip install numpy pandas scikit-learn scipy pyyaml pytest
+      - name: Lint (syntax)
+        run: python -m compileall src scripts tests
+      - name: Fold integrity test
+        run: PYTHONPATH=src python -m pytest tests/test_folds.py -q

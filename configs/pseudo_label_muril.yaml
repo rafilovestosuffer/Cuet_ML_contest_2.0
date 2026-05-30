@@ -1,0 +1,5 @@
+name: pseudo_label_muril
+modality: text
+base_model: google/muril-large-cased
+confidence_threshold: 0.95
+oof_out: artifacts/oof_pl_muril.npy

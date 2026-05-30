@@ -1,0 +1,12 @@
+name: text_muril_large
+modality: text
+model_name: google/muril-large-cased   # confirm from notebook
+max_len: 256
+pooling: mean
+loss: {type: focal_label_smoothing, gamma: 2.0, smoothing: 0.05}
+optimizer: {type: adamw, lr_backbone: 8.0e-6, lr_head: 5.0e-4, weight_decay: 0.01}
+scheduler: {type: cosine, warmup_ratio: 0.10}
+train: {epochs: 4, micro_batch: 4, grad_accum: 8, amp: true, grad_checkpoint: true}
+folds: data/folds/folds_canonical.csv
+seeds: [42]
+oof_out: artifacts/oof_muril_large.npy

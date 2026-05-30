@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: "Text-Dominant Multimodal Ensembling for Bengali Disaster Classification"
+message: "If you use this code, please cite the paper and this repository."
+authors:
+  - family-names: Rahman
+    given-names: Rafiur
+repository-code: "https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0"
+keywords:
+  - multimodal learning
+  - Bengali NLP
+  - disaster classification
+  - model ensembling
+license: MIT

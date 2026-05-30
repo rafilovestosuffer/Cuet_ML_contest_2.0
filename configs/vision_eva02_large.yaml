@@ -1,0 +1,12 @@
+name: vision_eva02_large
+modality: image
+model_name: eva02_large_patch14_448.mim_m38m_ft_in22k_in1k  # confirm from notebook
+image_size: 448
+drop_path_rate: 0.10
+tta_views: 5
+loss: {type: focal_label_smoothing, gamma: 2.0, smoothing: 0.05}
+optimizer: {type: adamw, lr_backbone: 1.0e-5, lr_head: 5.0e-4, weight_decay: 0.01}
+scheduler: {type: cosine, warmup_ratio: 0.10}
+train: {epochs: 6, micro_batch: 4, grad_accum: 8, amp: true, grad_checkpoint: true}
+folds: data/folds/folds_canonical.csv
+oof_out: artifacts/oof_eva02_large.npy

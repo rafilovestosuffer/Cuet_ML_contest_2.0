@@ -1,0 +1,5 @@
+name: specialist_eqflls
+modality: text
+classes: [Earthquake, Flood, Landslides]
+fusion: {type: multiplicative_power, beta_grid: [0.5, 0.75, 1.0, 1.25, 1.5]}
+folds: data/folds/folds_canonical.csv
