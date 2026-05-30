@@ -6,11 +6,14 @@ Non Disaster, Tropical Storm, Wildfire). Each instance pairs a Bengali caption
 (`context`) with an image; the metric is **macro-F1**.
 
 > **OOF result (5-fold, primary metric): macro-F1 = 0.9956**
-> Public leaderboard: _TODO — insert verified LB score & rank._
+> **Public leaderboard: macro-F1 = 0.99826** (submission `submission_final.csv` —
+> the bootstrap-stable bias submission with the Bengali keyword post-processing).
 
-Numbers in this README are computed by `scripts/reproduce_ensemble.py` from
-frozen OOF arrays; nothing is hardcoded. See `PROVENANCE.md` for the
-verified-vs-reconstructed boundary.
+The **OOF** numbers in this README are computed by `scripts/reproduce_ensemble.py`
+from frozen OOF arrays; nothing is hardcoded. The **public-leaderboard** number is
+the Kaggle grader's score on the hidden test labels (it cannot be recomputed
+locally) — it is reported here as measured on the contest, not derived in-repo.
+See `PROVENANCE.md` for the verified-vs-reconstructed boundary.
 
 ---
 
