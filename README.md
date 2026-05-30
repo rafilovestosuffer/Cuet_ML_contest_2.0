@@ -5,73 +5,136 @@ classification (Drought, Earthquake, Flood, Human Damage, Landslides,
 Non Disaster, Tropical Storm, Wildfire). Each instance pairs a Bengali caption
 (`context`) with an image; the metric is **macro-F1**.
 
-> **Result:** 5-fold out-of-fold (OOF) **macro-F1 ≈ 0.9956**.
-> Public leaderboard: _TODO (insert your verified LB score & rank)_.
+> **OOF result (5-fold, primary metric): macro-F1 = 0.9954**
+> Public leaderboard: _TODO — insert verified LB score & rank._
 
-## Method at a glance
-1. **Frozen 5-fold split** (`data/folds/folds_canonical.csv`) shared by every
-   branch so all OOF probabilities are stackable without leakage.
-2. **Six base models** — text: BanglaBERT-base, BanglaBERT multilingual,
-   MuRIL-Large; image: EVA-02-Large; multimodal: EVA-02×MuRIL cross-attention;
-   semi-supervised: PL-MuRIL.
-3. **Meta-learning** — LightGBM stacking → Dirichlet-restart convex blend
-   (macro-F1 objective) → α-mix.
-4. **Per-class log-bias calibration** — coordinate ascent + 15-resample
-   bootstrap median (the submitted, stable config).
-5. **Deterministic Bengali rules** — emoji map + a confidence-gated keyword
-   override with an *aftermath guard* (`[hazard]+por` = after the event ≠ event).
+Numbers in this README are computed by `scripts/reproduce_ensemble.py` from
+frozen OOF arrays; nothing is hardcoded. See `PROVENANCE.md` for the
+verified-vs-reconstructed boundary.
+
+---
+
+## OOF results table
 
 | Stage | OOF macro-F1 |
 |---|---|
-| MuRIL-Large (best unimodal text) | 0.97556 |
-| EVA-02-Large (best image)        | 0.96714 |
-| EVA-02 × MuRIL fusion            | 0.99212 |
-| LightGBM stack                   | 0.99351 |
-| Dirichlet blend                  | 0.99495 |
-| + per-class bias (submitted)     | **≈ 0.9956** |
+| BanglaBERT-base (text, multi-seed avg) | 0.96587 |
+| BanglaBERT multilingual (text)         | 0.96656 |
+| MuRIL-Large (text, best unimodal)      | 0.97556 |
+| EVA-02-Large @448 (image)              | 0.96714 |
+| EVA-02 × MuRIL cross-attention fusion  | 0.99212 |
+| PL-MuRIL (pseudo-labeled re-finetune)  | 0.97525 |
+| LightGBM stack (s3e)                   | 0.99351 |
+| Dirichlet blend (50 NM restarts)       | 0.99495 |
+| + α-mix with stack (α=0.985)           | 0.99495 |
+| + bias single-shot (coord. ascent)     | 0.99558 |
+| **+ bias bootstrap-stable (submitted)**| **0.99542** |
 
-(Numbers above are produced by `scripts/reproduce_ensemble.py`, not hardcoded.)
+Per-class F1 (bootstrap-stable bias, reproduced from frozen OOF):
 
-## Quickstart
+| Class | Precision | Recall | F1 |
+|---|---|---|---|
+| Drought        | 0.9987 | 0.9975 | 0.9981 |
+| Earthquake     | 1.0000 | 0.9875 | 0.9937 |
+| Flood          | 0.9938 | 0.9950 | 0.9944 |
+| Human Damage   | 0.9962 | 0.9962 | 0.9962 |
+| Landslides     | 0.9852 | 0.9950 | 0.9901 |
+| Non Disaster   | 0.9987 | 0.9975 | 0.9981 |
+| Tropical Storm | 0.9963 | 0.9975 | 0.9969 |
+| Wildfire       | 0.9945 | 0.9972 | 0.9958 |
+| **macro avg**  | **0.9954** | **0.9954** | **0.9954** |
+
+---
+
+## Method at a glance
+
+1. **Frozen 5-fold split** (`data/folds/folds_canonical.csv`) shared by every
+   branch so all OOF probabilities are stackable without leakage.
+2. **Six base models** — text: BanglaBERT-base (seeds 123+456), BanglaBERT
+   multilingual, MuRIL-Large; image: EVA-02-Large @448; multimodal: EVA-02×MuRIL
+   cross-attention; semi-supervised: PL-MuRIL.
+3. **Meta-learning** — LightGBM stacking → Dirichlet-restart convex blend
+   (macro-F1 objective, 50 Nelder–Mead restarts) → α-mix (α=0.985).
+4. **Per-class log-bias calibration** — coordinate ascent + 15-resample
+   bootstrap median (the submitted, stable config).
+5. **Deterministic Bengali rules** — emoji map + a confidence-gated keyword
+   override with an *aftermath guard* (`[hazard]+por` = aftermath ≠ live event).
+
+Blend weights from Dirichlet search:
+`banglabert_base=0.167, banglabert_multi=0.040, muril_large=0.017,
+eva02_large=0.352, fusion_eva_muril=0.415, pl_muril=0.009`
+
+---
+
+## Quickstart (reproduce in 5 commands)
+
 ```bash
 git clone https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0.git
 cd Cuet_ML_contest_2.0
 pip install -r requirements.txt          # or: conda env create -f environment.yml
 
-# 1) get the data (see data/README.md) and build folds
-make folds
-
+# 1) download data & artifacts (see data/README.md and artifacts/README.md)
 # 2) reproduce the ensemble result from frozen OOF arrays
-make reproduce
+PYTHONPATH=src python scripts/reproduce_ensemble.py --figures
 
-# 3) run the tests
-make test
+# 3) run the test suite
+PYTHONPATH=src pytest tests/ -v
 ```
+
+Or via Makefile:
+```bash
+make reproduce    # runs reproduce_ensemble.py
+make test         # runs pytest
+make figures      # generates all paper figures into results/figures/
+```
+
+---
 
 ## Repository layout
+
 ```
-configs/      one YAML per experiment (hyperparameters)
-data/         download instructions + frozen folds (no raw data committed)
-src/disaster/ package: data, models, train, ensemble, rules, infer, eda
-scripts/      reproduce_ensemble.py and CLI wrappers
-notebooks/    original Kaggle notebooks (provenance)
-artifacts/    OOF/test probability arrays (Git LFS / Release; see its README)
-results/      generated figures and tables
-paper/        IEEE manuscript + figures
-tests/        fold integrity + artifact reproduction
+configs/        one YAML per experiment (hyperparameters)
+data/           download instructions + frozen folds (no raw data committed)
+src/disaster/   package: data, models, train, ensemble, rules, infer, eda
+  ensemble/     blend, stacking, alpha_mix, bias_calibration  [VERIFIED]
+  rules/        emoji_rules, bengali_keyword_guard             [VERIFIED]
+  infer/        predict (full pipeline), make_submission       [VERIFIED]
+  eda/          analysis, plots                                [VERIFIED]
+  models/       text_encoder, vision_encoder, fusion           [RECONSTRUCTED]
+  train/        train_text/vision/fusion, pseudo_label, spec.  [RECONSTRUCTED]
+scripts/        reproduce_ensemble.py
+notebooks/      original Kaggle notebooks (provenance, read-only)
+artifacts/      OOF/test .npy arrays (Git LFS / Release; not committed)
+results/        generated figures (results/figures/) and tables
+paper/          IEEE manuscript + figures
+tests/          fold integrity + F1 reproduction
 ```
 
-## Reproducibility & honesty
-- Every reported number is regenerated from artifacts; nothing is hardcoded.
-- Dataset provenance is documented in `data/README.md` (BanglaCalamityMMD; the
-  contest test set = the dataset's test+validation splits). The OOF CV result is
-  the primary metric. Post-processing rules are logged to
-  `results/tables/applied_corrections.csv`.
+See `PROVENANCE.md` for the full verified-vs-reconstructed boundary.
+
+---
+
+## Dataset & reproducibility
+
+- **Dataset**: BanglaCalamityMMD (Mendeley `7dggbjn5sd`). The contest test set
+  corresponds to the dataset's test+validation splits. Download instructions in
+  `data/README.md`.
+- **Reproducibility**: OOF CV result is the primary metric. The test arrays in
+  `artifacts/` were produced by the same trained models. Post-processing rules
+  are logged to `results/tables/applied_corrections.csv`.
+- **Honesty**: text post-processing (emoji map + keyword guard) is labeled as
+  post-processing in `PROVENANCE.md` — it is not part of the model pipeline.
 
 ## Compliance with contest rules
+
 Encoder-only CNN/transformer backbones; open-source pretrained weights only; no
 vision–language or generative model; no external dataset; inference fits free
 Kaggle/Colab limits; submission preserves the `categry` column spelling.
 
 ## Citation
+
 See `CITATION.cff`. Code is MIT-licensed; the dataset retains its own license.
+
+## Contest link
+
+[Intra CUET ML Contest 2.0](https://www.kaggle.com/competitions/intra-cuet-ml-contest-2)

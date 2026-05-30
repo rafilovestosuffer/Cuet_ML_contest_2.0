@@ -1,30 +1,103 @@
-# Reproducing the paper
+# Reproduce — Paper Tables & Figures
 
-All commands assume `PYTHONPATH=src` and that OOF arrays are present in
-`artifacts/` (see `artifacts/README.md`).
+Every number and figure in the paper can be regenerated from the frozen OOF
+arrays in `artifacts/` and the canonical fold split in `data/folds/`.
+No raw data is required to reproduce the ensemble metrics; raw data is only
+needed to retrain the base models.
 
-## One command: the ensemble result
-```
-PYTHONPATH=src python scripts/reproduce_ensemble.py
-```
-Prints individual OOF F1, the Dirichlet blend, the alpha-mix, and the
-single-shot / bootstrap-stable per-class bias results (paper Tables I–III).
+All commands assume the repo root as the working directory.
 
-## Paper table / figure -> command
-| Artifact | How to regenerate |
-|---|---|
-| Table I (individual OOF) | `scripts/reproduce_ensemble.py` (top block) |
-| Table II (progression)   | `scripts/reproduce_ensemble.py` |
-| Table III (per-class)    | `scripts/reproduce_ensemble.py` (classification report) |
-| Fig. class distribution  | `disaster.eda.plots.fig_class_dist('data/raw/Disaster_train.csv')` |
-| Fig. confusion matrix    | `disaster.eda.plots.fig_confusion('artifacts/oof_mix.npy', 'data/folds/folds_canonical.csv')` |
-| Fig. fusion comparison   | `disaster.eda.plots.fig_fusion_compare({...})` |
-| Submission CSV           | `disaster.infer.make_submission(...)` |
+---
 
-## Retrain a branch from scratch
+## Prerequisites
+
+```bash
+git clone https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0.git
+cd Cuet_ML_contest_2.0
+pip install -r requirements.txt
+
+# Download OOF/test arrays (not committed; see artifacts/README.md):
+#   Option A: GitHub Release → place .npy files in artifacts/
+#   Option B: Git LFS pull
 ```
-PYTHONPATH=src python -m disaster.train.train_text   --config configs/text_muril_large.yaml
-PYTHONPATH=src python -m disaster.train.train_vision --config configs/vision_eva02_large.yaml
-PYTHONPATH=src python -m disaster.train.train_fusion --config configs/fusion_eva02_muril.yaml
+
+---
+
+## Paper table / figure → command
+
+| Paper item | Command | Output |
+|---|---|---|
+| Table: individual OOF F1 | `PYTHONPATH=src python scripts/reproduce_ensemble.py` | printed to stdout |
+| Table: blend / α-mix / bias F1 | same | printed to stdout |
+| Table: per-class F1 report | same | printed to stdout |
+| Fig: class distribution | `PYTHONPATH=src python scripts/reproduce_ensemble.py --figures` | `results/figures/fig_class_dist.pdf` |
+| Fig: OOF waterfall | same | `results/figures/fig_oof_waterfall.pdf` |
+| Fig: per-class F1 | same | `results/figures/fig_per_class_f1.pdf` |
+| Fig: confusion matrix | same | `results/figures/fig_confusion.pdf` |
+| Fig: fusion strategy comparison | same | `results/figures/fig_fusion_compare.pdf` |
+| Fig: per-class log-bias vector | same | `results/figures/fig_bias_vector.pdf` |
+| Fig: modality error overlap | same | `results/figures/fig_error_overlap.pdf` |
+| Submission CSV (from test arrays) | `PYTHONPATH=src python -m disaster.infer.predict --test-csv data/Test/test.csv` | `results/tables/submission.csv` |
+| Rule corrections log | same (side-effect) | `results/tables/applied_corrections.csv` |
+
+Or using the Makefile:
+
+```bash
+make reproduce   # ensemble metrics
+make figures     # all paper figures
+make test        # fold integrity + F1 reproduction
+make submission  # submission.csv (requires data/Test/test.csv)
 ```
-(Training entry points are stubs to be ported from `notebooks/`.)
+
+---
+
+## Expected output of `reproduce_ensemble.py`
+
+```
+Individual OOF macro-F1:
+  oof_banglabert_base         0.96587
+  oof_banglabert_multi        0.96656
+  oof_muril_large             0.97556
+  oof_eva02_large             0.96714
+  oof_fusion_eva_muril        0.99212
+  oof_pl_muril                0.97525
+  oof_stack                   0.99351
+
+Dirichlet blend              : 0.99495
+  weights: {'banglabert_base': 0.167, 'banglabert_multi': 0.040,
+            'muril_large': 0.017, 'eva02_large': 0.352,
+            'fusion_eva_muril': 0.415, 'pl_muril': 0.009}
+alpha-mix (alpha=0.985)       : 0.99495
++ bias single-shot           : 0.99558
++ bias bootstrap-stable      : 0.99542  <-- submitted
+
+Per-class F1 (bootstrap-stable bias):
+                precision    recall  f1-score   support
+       Drought     0.9987    0.9975    0.9981       800
+    Earthquake     1.0000    0.9875    0.9937       800
+         Flood     0.9938    0.9950    0.9944       800
+  Human Damage     0.9962    0.9962    0.9962       800
+    Landslides     0.9852    0.9950    0.9901       803
+  Non Disaster     0.9987    0.9975    0.9981       800
+Tropical Storm     0.9963    0.9975    0.9969       800
+      Wildfire     0.9945    0.9972    0.9958       720
+     macro avg     0.9954    0.9954    0.9954      6323
+```
+
+---
+
+## Retrain base models (optional, GPU required)
+
+The reconstructed training code in `src/disaster/train/` is a faithful
+reference implementation from the paper spec. It has not been verified to
+reproduce the exact frozen OOF arrays (see `PROVENANCE.md`).
+
+```bash
+make folds          # rebuild folds_canonical.csv from raw training CSV
+make train-text     # BanglaBERT-base, BanglaBERT-multi, MuRIL-Large
+make train-vision   # EVA-02-Large @448
+make train-fusion   # EVA-02 × MuRIL cross-attention
+make pseudo-label   # pseudo-label selection + PL-MuRIL re-finetune
+make stack          # LightGBM stacking meta-learner
+make reproduce      # reproduce ensemble from (new) OOF arrays
+```
