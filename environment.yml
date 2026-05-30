@@ -1,7 +1,11 @@
 name: cuet-disaster
-channels: [conda-forge, pytorch, nvidia]
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
 dependencies:
   - python=3.10
+  - cudatoolkit=11.8
   - pip
   - pip:
     - -r requirements.txt
