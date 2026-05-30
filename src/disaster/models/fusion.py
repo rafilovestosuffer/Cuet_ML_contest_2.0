@@ -1,19 +1,16 @@
-# TRANSCRIBED FROM notebooks/Final_notebook.ipynb — the `JointMM` class below is
-# the original cross-attention fusion model, copied faithfully. `LateFusion` is a
-# RECONSTRUCTED baseline (from spec) provided so the late-vs-cross-attention
-# ablation is runnable; it is not from the notebook and was not used in the paper.
+# TRANSCRIBED FROM notebooks/Final_notebook.ipynb — the JointMM class below is
+# the actual cross-attention fusion model used in the competition, copied verbatim.
 
-"""Text-anchored cross-attention fusion (JointMM) + late-fusion baseline.
+"""Text-anchored cross-attention fusion model (JointMM).
 
-JointMM (faithful):
   * Image encoder (timm) → v ∈ R^img_dim;  text encoder (HF) mean-pooled → t ∈ R^text_dim.
   * Both projected to d_f=512 via Linear→LayerNorm→GELU.
   * Text is the Query, image the Key/Value into 8-head MultiheadAttention.
   * classifier sees concat[attn_out, text_proj(t)] → LayerNorm → Dropout(0.2) → Linear(8).
 
-The same class covers both backbone variants by config:
-  * ConvNeXt V2-base @384 × MuRIL-Large  (img_dim=1024)  — the notebook's final run
-  * EVA-02-Large @448 × MuRIL-Large      (img_dim=1024)  — the `oof_fusion_eva_muril` artifact
+The notebook's final run used ConvNeXt V2-base @384 × MuRIL-Large (img_dim=1024);
+the released `oof_fusion_eva_muril` artifact is the EVA-02-Large @448 × MuRIL
+variant. Both are covered by this class via the config dict.
 """
 import torch
 import torch.nn as nn
@@ -75,18 +72,3 @@ class JointMM(nn.Module):
         attn_out, _ = self.cross_attn(query=txt_q, key=img_q, value=img_q)
         fused = torch.cat([attn_out.squeeze(1), self.text_proj(txt_f)], dim=-1)
         return self.classifier(fused)
-
-
-class LateFusion(nn.Module):
-    """RECONSTRUCTED baseline: weighted average of independent posteriors.
-
-    Provided only for the late-vs-cross-attention ablation; not used in the
-    paper's submitted pipeline.
-    """
-
-    def __init__(self, alpha: float = 0.5):
-        super().__init__()
-        self.alpha = alpha
-
-    def forward(self, text_prob, img_prob):
-        return self.alpha * text_prob + (1 - self.alpha) * img_prob

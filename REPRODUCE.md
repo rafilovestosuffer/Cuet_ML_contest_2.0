@@ -86,18 +86,19 @@ Tropical Storm     0.9963    0.9988    0.9975       800
 
 ---
 
-## Retrain base models (optional, GPU required)
+## Training
 
-The reconstructed training code in `src/disaster/train/` is a faithful
-reference implementation from the paper spec. It has not been verified to
-reproduce the exact frozen OOF arrays (see `PROVENANCE.md`).
+Training was done in **`notebooks/Final_notebook.ipynb`** on Kaggle (Tesla T4) —
+that notebook is the source of truth for how the base models and the `JointMM`
+fusion model were trained. The model definition (`src/disaster/models/fusion.py`)
+and the training objective (`src/disaster/losses.py`) are extracted from it as
+reference `.py` files; the full training loop lives in the notebook.
+
+This repository reproduces the **evaluation** half (the part that turns the
+frozen OOF/test arrays into the final score and submission) — see the table above.
 
 ```bash
-make folds          # rebuild folds_canonical.csv from raw training CSV
-make train-text     # BanglaBERT-base, BanglaBERT-multi, MuRIL-Large
-make train-vision   # EVA-02-Large @448
-make train-fusion   # EVA-02 × MuRIL cross-attention
-make pseudo-label   # pseudo-label selection + PL-MuRIL re-finetune
-make stack          # LightGBM stacking meta-learner
-make reproduce      # reproduce ensemble from (new) OOF arrays
+make folds       # rebuild the canonical 5-fold split from the host train CSV
+make stack       # rebuild the LightGBM stack OOF from the base OOF arrays
+make reproduce   # reproduce the ensemble macro-F1 from frozen OOF arrays
 ```

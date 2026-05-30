@@ -102,25 +102,26 @@ make figures      # generates all paper figures into results/figures/
 ## Repository layout
 
 ```
-configs/        one YAML per experiment (hyperparameters)
-data/           download instructions + frozen folds (no raw data committed)
-src/disaster/   package: data, models, train, ensemble, rules, infer, eda
-  ensemble/     blend, stacking, alpha_mix, bias_calibration  [VERIFIED]
-  rules/        emoji_rules, bengali_keyword_guard             [VERIFIED]
-  infer/        predict (full pipeline), make_submission       [VERIFIED]
-  eda/          analysis, plots                                [VERIFIED]
-  models/       fusion (JointMM) [TRANSCRIBED]; encoders [RECONSTRUCTED]
-  data/         dataset, transforms, tokenization [TRANSCRIBED]; folds [VERIFIED]
-  train/        train_text/vision/fusion, pseudo_label, spec.  [RECONSTRUCTED]
+notebooks/      Final_notebook.ipynb — the actual competition work (training + eval)
+src/disaster/   the evaluation pipeline + model, refactored from the notebook
+  models/       fusion.py — JointMM cross-attention model        [TRANSCRIBED]
+  losses.py     soft_ce + cosine_warmup (training objective)     [TRANSCRIBED]
+  ensemble/     blend, stacking, alpha_mix, bias_calibration     [VERIFIED]
+  rules/        emoji_rules, bengali_keyword_guard               [VERIFIED]
+  infer/        predict (full pipeline), make_submission         [VERIFIED]
+  eda/          analysis, plots (evaluation study + figures)     [VERIFIED]
+  data/         folds.py — rebuild the canonical split           [VERIFIED]
+  labels.py     label space + submission-column handling         [VERIFIED]
 scripts/        reproduce_ensemble.py
-notebooks/      original Kaggle notebooks (provenance, read-only)
 artifacts/      OOF/test .npy arrays (Git LFS / Release; not committed)
-results/        generated figures (results/figures/) and tables
-paper/          IEEE manuscript + figures
+data/           download instructions (host dataset not committed)
+results/        generated figures + tables (git-ignored)
 tests/          fold integrity + F1 reproduction
 ```
 
-See `PROVENANCE.md` for the full verified-vs-reconstructed boundary.
+This repo keeps **only code that was actually used**: the notebook, the `JointMM`
+model, and the evaluation/ensemble logic. See `PROVENANCE.md` for the
+verified-vs-transcribed boundary.
 
 ---
 
