@@ -1,4 +1,3 @@
-"""Fold integrity: every row in exactly one fold, stratification preserved."""
 import pandas as pd
 
 FOLDS = "data/folds/folds_canonical.csv"

@@ -1,37 +1,21 @@
-# TRANSCRIBED FROM notebooks/Final_notebook.ipynb — the JointMM class below is
-# the actual cross-attention fusion model used in the competition, copied verbatim.
-
-"""Text-anchored cross-attention fusion model (JointMM).
-
-  * Image encoder (timm) → v ∈ R^img_dim;  text encoder (HF) mean-pooled → t ∈ R^text_dim.
-  * Both projected to d_f=512 via Linear→LayerNorm→GELU.
-  * Text is the Query, image the Key/Value into 8-head MultiheadAttention.
-  * classifier sees concat[attn_out, text_proj(t)] → LayerNorm → Dropout(0.2) → Linear(8).
-
-The notebook's final run used ConvNeXt V2-base @384 × MuRIL-Large (img_dim=1024);
-the released `oof_fusion_eva_muril` artifact is the EVA-02-Large @448 × MuRIL
-variant. Both are covered by this class via the config dict.
-"""
 import torch
 import torch.nn as nn
 
 try:
     import timm
     from transformers import AutoModel
-except ImportError:  # pragma: no cover
+except ImportError:
     timm = None
     AutoModel = None
 
 
 class JointMM(nn.Module):
-    """End-to-end cross-attention multimodal classifier (from the notebook)."""
 
     def __init__(self, cfg: dict, n_cls: int = 8):
         super().__init__()
         assert timm is not None and AutoModel is not None, \
             "pip install timm transformers"
 
-        # Image encoder — fine-tuned, with gradient checkpointing.
         self.img_enc = timm.create_model(
             cfg["img_model"], pretrained=True, num_classes=0,
             drop_path_rate=cfg.get("drop_path", 0.10),
@@ -42,7 +26,6 @@ class JointMM(nn.Module):
             except Exception:
                 pass
 
-        # Text encoder — fine-tuned.
         self.text_enc = AutoModel.from_pretrained(cfg["text_model"])
         if hasattr(self.text_enc, "gradient_checkpointing_enable"):
             self.text_enc.gradient_checkpointing_enable()
@@ -58,14 +41,14 @@ class JointMM(nn.Module):
             nn.LayerNorm(fd * 2), nn.Dropout(0.2), nn.Linear(fd * 2, n_cls))
 
     def forward(self, image, input_ids, attention_mask, token_type_ids=None):
-        img_f = self.img_enc(image)  # (B, img_dim)
+        img_f = self.img_enc(image)
 
         kw = dict(input_ids=input_ids, attention_mask=attention_mask)
         if token_type_ids is not None:
             kw["token_type_ids"] = token_type_ids
         t_out = self.text_enc(**kw).last_hidden_state
         m = attention_mask.unsqueeze(-1).float()
-        txt_f = (t_out * m).sum(1) / m.sum(1).clamp(min=1e-9)  # masked mean pool
+        txt_f = (t_out * m).sum(1) / m.sum(1).clamp(min=1e-9)
 
         img_q = self.img_proj(img_f).unsqueeze(1)
         txt_q = self.text_proj(txt_f).unsqueeze(1)

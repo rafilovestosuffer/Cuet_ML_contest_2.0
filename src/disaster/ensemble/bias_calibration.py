@@ -1,11 +1,3 @@
-"""Per-class additive log-bias tuned for macro-F1.
-
-predict = argmax_c ( log p_c + b_c )
-
-Two fits are provided:
-  * single-shot coordinate ascent (aggressive, upper bound)
-  * bootstrap-median over resamples (stable; this is the submitted config)
-"""
 import numpy as np
 from sklearn.metrics import f1_score
 

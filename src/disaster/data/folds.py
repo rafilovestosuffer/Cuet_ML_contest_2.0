@@ -1,8 +1,3 @@
-"""Frozen 5-fold StratifiedKFold shared by every branch.
-
-The canonical split lives in data/folds/folds_canonical.csv so that all
-out-of-fold (OOF) probability arrays are mutually stackable without leakage.
-"""
 from pathlib import Path
 
 import pandas as pd

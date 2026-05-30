@@ -1,7 +1,3 @@
-# TRANSCRIBED FROM notebooks/Final_notebook.ipynb — the label-smoothed soft
-# cross-entropy and the cosine LR schedule used to train the fusion model.
-
-"""Training objective + LR schedule used by the fusion model (from the notebook)."""
 import math
 
 import torch
@@ -9,7 +5,6 @@ import torch.nn.functional as F
 
 
 def soft_ce(logits, soft_targets, smoothing: float = 0.05):
-    """Label-smoothed cross-entropy against soft targets (notebook verbatim)."""
     n = logits.size(1)
     lp = F.log_softmax(logits.float(), dim=-1)
     soft = soft_targets * (1 - smoothing) + smoothing / n
@@ -17,7 +12,6 @@ def soft_ce(logits, soft_targets, smoothing: float = 0.05):
 
 
 def cosine_warmup(optim, n_warmup: int, n_total: int):
-    """Linear warmup then cosine decay LR schedule (notebook verbatim)."""
     def fn(step):
         if step < n_warmup:
             return step / max(1, n_warmup)

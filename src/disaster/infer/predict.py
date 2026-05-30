@@ -1,13 +1,3 @@
-"""Full inference pipeline: frozen test arrays → submission.csv.
-
-Applies the same ensemble + calibration pipeline as reproduce_ensemble.py
-but on the test probability arrays.
-
-Usage (from repo root):
-    PYTHONPATH=src python -m disaster.infer.predict \\
-        --test-csv data/Test/test.csv \\
-        --out results/tables/submission.csv
-"""
 import argparse
 from pathlib import Path
 
@@ -38,7 +28,6 @@ def _load_tests():
 
 
 def build_ensemble(oofs, y, n_restarts=50):
-    """Fit blend weights + alpha + bias on OOF; return (w, alpha, bias)."""
     w, _ = search_blend_weights(oofs, y, n_restarts=n_restarts)
     blend_oof = apply_blend(oofs, w)
     stack_oof = np.load(A / "oof_stack.npy")
@@ -49,7 +38,6 @@ def build_ensemble(oofs, y, n_restarts=50):
 
 
 def apply_ensemble(tests, w, alpha, bias):
-    """Apply fitted ensemble to test arrays."""
     blend_test = apply_blend(tests, w)
     stack_test = np.load(A / "test_stack.npy")
     mix_test = apply_alpha(blend_test, stack_test, alpha)
@@ -58,25 +46,20 @@ def apply_ensemble(tests, w, alpha, bias):
 
 def apply_rules(logits: np.ndarray, test_df: pd.DataFrame,
                 corrections_csv: Path | None = None) -> np.ndarray:
-    """Apply emoji and keyword overrides; log changes if corrections_csv given."""
     probs = np.exp(logits - logits.max(1, keepdims=True))
     probs /= probs.sum(1, keepdims=True)
 
     pred = logits.argmax(1).copy()
     records = []
 
-    # The keyword guard needs the text-ensemble confidence on the *test* rows:
-    # mean softmax over the four text branches (BanglaBERT ×2, MuRIL, PL-MuRIL),
-    # matching the notebook's `text_ens` definition.
     text_tests = [np.load(A / f"test_{n}.npy")
                   for n in ("banglabert_base", "banglabert_multi", "muril_large", "pl_muril")]
-    text_mean = np.mean(text_tests, axis=0)  # (N, 8)
+    text_mean = np.mean(text_tests, axis=0)
 
     for i, row in test_df.iterrows():
         ctx = str(row.get("context", ""))
         row_i = i if corrections_csv else list(test_df.index).index(i)
 
-        # 1. Emoji override (highest priority)
         emo = emoji_override(ctx)
         if emo is not None:
             new_idx = list(LABELS).index(emo)
@@ -90,7 +73,6 @@ def apply_rules(logits: np.ndarray, test_df: pd.DataFrame,
                 pred[row_i] = new_idx
             continue
 
-        # 2. Keyword guard
         txt_argmax = IDX2LABEL[int(text_mean[row_i].argmax())]
         txt_conf = float(text_mean[row_i].max())
         kw = keyword_override(ctx, txt_argmax, txt_conf)
@@ -119,7 +101,6 @@ def apply_rules(logits: np.ndarray, test_df: pd.DataFrame,
 def run(test_csv: str, out_csv: str = "results/tables/submission.csv",
         corrections_csv: str = "results/tables/applied_corrections.csv",
         sample_submission_csv: str | None = None):
-    """Full pipeline: load OOFs → fit ensemble → apply to test → rules → CSV."""
     print("Loading OOF arrays …")
     y = pd.read_csv("data/folds/folds_canonical.csv",
                     encoding="utf-8-sig")["label"].values

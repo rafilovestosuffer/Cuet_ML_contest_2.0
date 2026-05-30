@@ -1,8 +1,3 @@
-"""LightGBM stacking meta-learner over concatenated OOF probability vectors.
-
-CV-safe: trained on OOF predictions only. At inference the same trained models
-are applied to the base models' test predictions.
-"""
 import numpy as np
 
 try:
@@ -14,7 +9,6 @@ except ImportError:
 
 def train_stacker(oof_features: np.ndarray, y: np.ndarray, folds: np.ndarray,
                   params: dict | None = None):
-    """Out-of-fold stacking. Returns (oof_pred_proba, list_of_models)."""
     if not _HAS_LGB:
         raise ImportError("lightgbm is required for the stacker (pip install lightgbm).")
     params = params or dict(

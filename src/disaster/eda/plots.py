@@ -1,13 +1,3 @@
-"""Generate every paper figure into results/figures/.
-
-All figures that require probabilities load arrays from artifacts/ at runtime —
-nothing is hardcoded. Figures that need raw image data are noted as skipped when
-the data directory is absent.
-
-Filenames match the paper's \\includegraphics calls.
-Run via:
-    PYTHONPATH=src python -m disaster.eda.plots
-"""
 from pathlib import Path
 
 import matplotlib
@@ -44,9 +34,6 @@ def _load_y(folds_csv="data/folds/folds_canonical.csv"):
     return df, df["label"].values
 
 
-# ---------------------------------------------------------------------------
-# Fig 1 — class distribution (from folds_canonical.csv, no raw CSV needed)
-# ---------------------------------------------------------------------------
 def fig_class_dist(folds_csv="data/folds/folds_canonical.csv"):
     df, _ = _load_y(folds_csv)
     vc = df["category"].value_counts().reindex(LABELS)
@@ -64,9 +51,6 @@ def fig_class_dist(folds_csv="data/folds/folds_canonical.csv"):
     _save(fig, "fig_class_dist.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 2 — OOF macro-F1 waterfall per branch
-# ---------------------------------------------------------------------------
 def fig_oof_waterfall(folds_csv="data/folds/folds_canonical.csv",
                       artifacts="artifacts"):
     _, y = _load_y(folds_csv)
@@ -90,9 +74,6 @@ def fig_oof_waterfall(folds_csv="data/folds/folds_canonical.csv",
     _save(fig, "fig_oof_waterfall.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 3 — per-class F1 for the final ensemble
-# ---------------------------------------------------------------------------
 def fig_per_class_f1(final_oof_npy, folds_csv="data/folds/folds_canonical.csv"):
     p = np.load(final_oof_npy)
     _, y = _load_y(folds_csv)
@@ -111,9 +92,6 @@ def fig_per_class_f1(final_oof_npy, folds_csv="data/folds/folds_canonical.csv"):
     _save(fig, "fig_per_class_f1.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 4 — confusion matrix (normalized)
-# ---------------------------------------------------------------------------
 def fig_confusion(final_oof_npy, folds_csv="data/folds/folds_canonical.csv"):
     p = np.load(final_oof_npy)
     _, y = _load_y(folds_csv)
@@ -137,9 +115,6 @@ def fig_confusion(final_oof_npy, folds_csv="data/folds/folds_canonical.csv"):
     _save(fig, "fig_confusion.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 5 — fusion strategy comparison
-# ---------------------------------------------------------------------------
 def fig_fusion_compare(folds_csv="data/folds/folds_canonical.csv",
                        artifacts="artifacts"):
     _, y = _load_y(folds_csv)
@@ -165,9 +140,6 @@ def fig_fusion_compare(folds_csv="data/folds/folds_canonical.csv",
     _save(fig, "fig_fusion_compare.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 6 — bias vector bar chart
-# ---------------------------------------------------------------------------
 def fig_bias_vector(bias_npy="artifacts/bias_s3e.npy"):
     b = np.load(bias_npy)
     fig, ax = plt.subplots(figsize=(7, 3.2))
@@ -185,9 +157,6 @@ def fig_bias_vector(bias_npy="artifacts/bias_s3e.npy"):
     _save(fig, "fig_bias_vector.pdf")
 
 
-# ---------------------------------------------------------------------------
-# Fig 7 — modality error overlap
-# ---------------------------------------------------------------------------
 def fig_error_overlap(folds_csv="data/folds/folds_canonical.csv",
                       artifacts="artifacts"):
     _, y = _load_y(folds_csv)
@@ -213,7 +182,6 @@ def fig_error_overlap(folds_csv="data/folds/folds_canonical.csv",
 
 def generate_all(folds_csv="data/folds/folds_canonical.csv",
                  artifacts="artifacts"):
-    """Generate all available figures; print which are skipped."""
     print("Generating figures …")
     A = Path(artifacts)
     fig_class_dist(folds_csv)
@@ -222,8 +190,6 @@ def generate_all(folds_csv="data/folds/folds_canonical.csv",
     fig_error_overlap(folds_csv, artifacts)
     fig_bias_vector(str(A / "bias_s3e.npy"))
 
-    # Figures that need the final calibrated OOF (final_oof.npy is pre-calib blend;
-    # we use the stack OOF as a proxy — or callers can pass a calibrated npy)
     final_npy = A / "oof_stack.npy"
     if final_npy.exists():
         fig_confusion(str(final_npy), folds_csv)

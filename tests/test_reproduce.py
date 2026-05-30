@@ -1,9 +1,3 @@
-"""End-to-end VERIFIED reproduction: blend → alpha-mix → bias = paper's 0.9956.
-
-Re-runs the full meta-layer on the committed OOF arrays and asserts the final
-macro-F1 matches the paper within tolerance. This is the headline reproducibility
-guarantee of the repository.
-"""
 import numpy as np
 import pandas as pd
 import pytest
@@ -19,7 +13,6 @@ A = "artifacts/"
 BASE = ["oof_banglabert_base", "oof_banglabert_multi", "oof_muril_large",
         "oof_eva02_large", "oof_fusion_eva_muril", "oof_pl_muril"]
 
-# Paper / notebook reference values
 PAPER_BLEND = 0.99495
 PAPER_SINGLE = 0.99590
 PAPER_STABLE = 0.99557
@@ -45,7 +38,6 @@ def test_blend_reproduces_paper(setup):
 
 
 def test_alpha_in_expected_range(setup):
-    # Notebook found alpha (blend weight) = 0.855
     assert 0.80 <= setup["alpha"] <= 0.90, f"alpha={setup['alpha']}"
 
 

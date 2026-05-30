@@ -1,16 +1,3 @@
-"""Pytest configuration.
-
-The host dataset and the frozen `.npy` arrays are not committed (the dataset is
-proprietary to the contest organizers; the arrays are distributed via Release /
-Git LFS). So tests skip gracefully when their inputs are absent:
-
-  * fold file missing      → skip every test (all of them read it)
-  * fold file present but
-    artifacts missing       → skip only the `needs_artifacts` tests
-
-On a full local checkout (folds regenerated via `make folds` + artifacts present)
-the entire suite runs.
-"""
 import os
 
 import pytest
