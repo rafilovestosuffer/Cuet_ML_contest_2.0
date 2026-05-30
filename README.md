@@ -1,5 +1,11 @@
 # Detect the Disaster — Intra CUET ML Contest 2.0
 
+[![CI](https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0/actions/workflows/ci.yml/badge.svg)](https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0/actions/workflows/ci.yml)
+[![Public LB macro-F1](https://img.shields.io/badge/public%20LB%20macro--F1-0.99826-success)](https://www.kaggle.com/competitions/intra-cuet-ml-contest-2)
+[![OOF macro-F1](https://img.shields.io/badge/OOF%20macro--F1-0.9956-blue)](REPRODUCE.md)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Text-dominant **multimodal ensemble** for 8-class Bengali disaster
 classification (Drought, Earthquake, Flood, Human Damage, Landslides,
 Non Disaster, Tropical Storm, Wildfire). Each instance pairs a Bengali caption
@@ -103,7 +109,8 @@ src/disaster/   package: data, models, train, ensemble, rules, infer, eda
   rules/        emoji_rules, bengali_keyword_guard             [VERIFIED]
   infer/        predict (full pipeline), make_submission       [VERIFIED]
   eda/          analysis, plots                                [VERIFIED]
-  models/       text_encoder, vision_encoder, fusion           [RECONSTRUCTED]
+  models/       fusion (JointMM) [TRANSCRIBED]; encoders [RECONSTRUCTED]
+  data/         dataset, transforms, tokenization [TRANSCRIBED]; folds [VERIFIED]
   train/        train_text/vision/fusion, pseudo_label, spec.  [RECONSTRUCTED]
 scripts/        reproduce_ensemble.py
 notebooks/      original Kaggle notebooks (provenance, read-only)
@@ -128,11 +135,26 @@ See `PROVENANCE.md` for the full verified-vs-reconstructed boundary.
 - **Honesty**: text post-processing (emoji map + keyword guard) is labeled as
   post-processing in `PROVENANCE.md` — it is not part of the model pipeline.
 
+## Final submission
+
+The leaderboard submission (`submission_final.csv`, public macro-F1 **0.99826**)
+is the bootstrap-stable bias prediction with the Bengali keyword post-processing
+applied. Reproduce it from the frozen test arrays with:
+
+```bash
+make submission   # PYTHONPATH=src python -m disaster.infer.predict --test-csv ...
+```
+
+The submission's label column is **auto-detected** from the contest's
+`sample_submission.csv` (it resolves to `category`; see the note in `PROVENANCE.md`
+about the `category` vs `categry` discrepancy between the build prompt and the
+actual contest file).
+
 ## Compliance with contest rules
 
 Encoder-only CNN/transformer backbones; open-source pretrained weights only; no
 vision–language or generative model; no external dataset; inference fits free
-Kaggle/Colab limits; submission preserves the `categry` column spelling.
+Kaggle/Colab limits.
 
 ## Citation
 
