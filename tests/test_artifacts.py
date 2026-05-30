@@ -8,6 +8,8 @@ import pandas as pd
 import pytest
 from sklearn.metrics import f1_score
 
+pytestmark = pytest.mark.needs_artifacts
+
 A = "artifacts/"
 FOLDS_CSV = "data/folds/folds_canonical.csv"
 
@@ -73,9 +75,6 @@ def test_oof_probabilities_sum_to_one():
     """OOF softmax rows should sum to ~1 (or be logits that exp-sum to ~1)."""
     for name in ALL_OOF_F1:
         arr = np.load(A + name + ".npy")
-        row_sums = arr.sum(axis=1)
-        # Accept either probabilities (sum ≈ 1) or raw logits (sum != 1)
-        # Just assert no NaN/Inf
         assert np.isfinite(arr).all(), f"{name} contains NaN or Inf"
 
 

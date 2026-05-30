@@ -9,12 +9,14 @@ Run via:
     PYTHONPATH=src python -m disaster.eda.plots
 """
 from pathlib import Path
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 
 from disaster.labels import LABELS
 
@@ -49,7 +51,7 @@ def fig_class_dist(folds_csv="data/folds/folds_canonical.csv"):
     df, _ = _load_y(folds_csv)
     vc = df["category"].value_counts().reindex(LABELS)
     fig, ax = plt.subplots(figsize=(7, 3.5))
-    colors = ["#d9534f" if l == "Wildfire" else "#4c72b0" for l in LABELS]
+    colors = ["#d9534f" if lab == "Wildfire" else "#4c72b0" for lab in LABELS]
     bars = ax.bar(range(len(LABELS)), vc.values, color=colors)
     ax.set_xticks(range(len(LABELS)))
     ax.set_xticklabels(LABELS, rotation=35, ha="right", fontsize=9)
@@ -118,10 +120,12 @@ def fig_confusion(final_oof_npy, folds_csv="data/folds/folds_canonical.csv"):
     cm = confusion_matrix(y, p.argmax(1), normalize="true")
     fig, ax = plt.subplots(figsize=(6, 5.5))
     im = ax.imshow(cm, cmap="Blues", vmin=0, vmax=1)
-    ax.set_xticks(range(8)); ax.set_yticks(range(8))
+    ax.set_xticks(range(8))
+    ax.set_yticks(range(8))
     ax.set_xticklabels(LABELS, rotation=45, ha="right", fontsize=8)
     ax.set_yticklabels(LABELS, fontsize=8)
-    ax.set_xlabel("Predicted"); ax.set_ylabel("True")
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("True")
     ax.set_title("Confusion matrix (row-normalized)")
     for i in range(8):
         for j in range(8):

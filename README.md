@@ -5,7 +5,7 @@ classification (Drought, Earthquake, Flood, Human Damage, Landslides,
 Non Disaster, Tropical Storm, Wildfire). Each instance pairs a Bengali caption
 (`context`) with an image; the metric is **macro-F1**.
 
-> **OOF result (5-fold, primary metric): macro-F1 = 0.9954**
+> **OOF result (5-fold, primary metric): macro-F1 = 0.9956**
 > Public leaderboard: _TODO — insert verified LB score & rank._
 
 Numbers in this README are computed by `scripts/reproduce_ensemble.py` from
@@ -26,23 +26,23 @@ verified-vs-reconstructed boundary.
 | PL-MuRIL (pseudo-labeled re-finetune)  | 0.97525 |
 | LightGBM stack (s3e)                   | 0.99351 |
 | Dirichlet blend (50 NM restarts)       | 0.99495 |
-| + α-mix with stack (α=0.985)           | 0.99495 |
-| + bias single-shot (coord. ascent)     | 0.99558 |
-| **+ bias bootstrap-stable (submitted)**| **0.99542** |
+| + α-mix with stack (α=0.855)           | 0.99495 |
+| + bias single-shot (coord. ascent)     | 0.99590 |
+| **+ bias bootstrap-stable (submitted)**| **0.99557** |
 
 Per-class F1 (bootstrap-stable bias, reproduced from frozen OOF):
 
 | Class | Precision | Recall | F1 |
 |---|---|---|---|
-| Drought        | 0.9987 | 0.9975 | 0.9981 |
-| Earthquake     | 1.0000 | 0.9875 | 0.9937 |
-| Flood          | 0.9938 | 0.9950 | 0.9944 |
+| Drought        | 0.9987 | 0.9950 | 0.9969 |
+| Earthquake     | 1.0000 | 0.9888 | 0.9943 |
+| Flood          | 0.9962 | 0.9925 | 0.9944 |
 | Human Damage   | 0.9962 | 0.9962 | 0.9962 |
-| Landslides     | 0.9852 | 0.9950 | 0.9901 |
+| Landslides     | 0.9853 | 0.9988 | 0.9920 |
 | Non Disaster   | 0.9987 | 0.9975 | 0.9981 |
-| Tropical Storm | 0.9963 | 0.9975 | 0.9969 |
-| Wildfire       | 0.9945 | 0.9972 | 0.9958 |
-| **macro avg**  | **0.9954** | **0.9954** | **0.9954** |
+| Tropical Storm | 0.9963 | 0.9988 | 0.9975 |
+| Wildfire       | 0.9931 | 0.9972 | 0.9951 |
+| **macro avg**  | **0.9956** | **0.9956** | **0.9956** |
 
 ---
 
@@ -54,15 +54,15 @@ Per-class F1 (bootstrap-stable bias, reproduced from frozen OOF):
    multilingual, MuRIL-Large; image: EVA-02-Large @448; multimodal: EVA-02×MuRIL
    cross-attention; semi-supervised: PL-MuRIL.
 3. **Meta-learning** — LightGBM stacking → Dirichlet-restart convex blend
-   (macro-F1 objective, 50 Nelder–Mead restarts) → α-mix (α=0.985).
+   (macro-F1 objective, 50 Nelder–Mead restarts) → α-mix (α=0.855).
 4. **Per-class log-bias calibration** — coordinate ascent + 15-resample
    bootstrap median (the submitted, stable config).
 5. **Deterministic Bengali rules** — emoji map + a confidence-gated keyword
    override with an *aftermath guard* (`[hazard]+por` = aftermath ≠ live event).
 
 Blend weights from Dirichlet search:
-`banglabert_base=0.167, banglabert_multi=0.040, muril_large=0.017,
-eva02_large=0.352, fusion_eva_muril=0.415, pl_muril=0.009`
+`banglabert_base=0.069, banglabert_multi=0.004, muril_large=0.180,
+eva02_large=0.443, fusion_eva_muril=0.233, pl_muril=0.071`
 
 ---
 

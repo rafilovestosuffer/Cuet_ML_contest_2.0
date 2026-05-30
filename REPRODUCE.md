@@ -64,24 +64,24 @@ Individual OOF macro-F1:
   oof_stack                   0.99351
 
 Dirichlet blend              : 0.99495
-  weights: {'banglabert_base': 0.167, 'banglabert_multi': 0.040,
-            'muril_large': 0.017, 'eva02_large': 0.352,
-            'fusion_eva_muril': 0.415, 'pl_muril': 0.009}
-alpha-mix (alpha=0.985)       : 0.99495
-+ bias single-shot           : 0.99558
-+ bias bootstrap-stable      : 0.99542  <-- submitted
+  weights: {'banglabert_base': 0.069, 'banglabert_multi': 0.004,
+            'muril_large': 0.180, 'eva02_large': 0.443,
+            'fusion_eva_muril': 0.233, 'pl_muril': 0.071}
+alpha-mix (alpha=0.855)       : 0.99495
++ bias single-shot           : 0.99590
++ bias bootstrap-stable      : 0.99557  <-- submitted
 
 Per-class F1 (bootstrap-stable bias):
                 precision    recall  f1-score   support
-       Drought     0.9987    0.9975    0.9981       800
-    Earthquake     1.0000    0.9875    0.9937       800
-         Flood     0.9938    0.9950    0.9944       800
+       Drought     0.9987    0.9950    0.9969       800
+    Earthquake     1.0000    0.9888    0.9943       800
+         Flood     0.9962    0.9925    0.9944       800
   Human Damage     0.9962    0.9962    0.9962       800
-    Landslides     0.9852    0.9950    0.9901       803
+    Landslides     0.9853    0.9988    0.9920       803
   Non Disaster     0.9987    0.9975    0.9981       800
-Tropical Storm     0.9963    0.9975    0.9969       800
-      Wildfire     0.9945    0.9972    0.9958       720
-     macro avg     0.9954    0.9954    0.9954      6323
+Tropical Storm     0.9963    0.9988    0.9975       800
+      Wildfire     0.9931    0.9972    0.9951       720
+     macro avg     0.9956    0.9956    0.9956      6323
 ```
 
 ---

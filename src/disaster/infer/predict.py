@@ -14,13 +14,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from disaster.labels import IDX2LABEL, LABELS, SUBMISSION_LABEL_COLUMN
-from disaster.ensemble.blend import search_blend_weights, apply_blend
-from disaster.ensemble.alpha_mix import search_alpha, apply_alpha
-from disaster.ensemble.bias_calibration import fit_bias_bootstrap, apply_bias
+from disaster.ensemble.alpha_mix import apply_alpha, search_alpha
+from disaster.ensemble.bias_calibration import apply_bias, fit_bias_bootstrap
+from disaster.ensemble.blend import apply_blend, search_blend_weights
 from disaster.infer.make_submission import make_submission
-from disaster.rules.emoji_rules import emoji_override
+from disaster.labels import IDX2LABEL, LABELS
 from disaster.rules.bengali_keyword_guard import keyword_override
+from disaster.rules.emoji_rules import emoji_override
 
 A = Path("artifacts")
 BASE = [
@@ -65,12 +65,9 @@ def apply_rules(logits: np.ndarray, test_df: pd.DataFrame,
     pred = logits.argmax(1).copy()
     records = []
 
-    # Identify which OOF arrays are "text" for the keyword guard confidence
-    text_oofs = [np.load(A / f"oof_{n}.npy")
-                 for n in ("banglabert_base", "banglabert_multi", "muril_large", "pl_muril")]
-    # Use mean of text OOF softmax as the "text ensemble confidence"
-    # (test equivalents are not needed — keyword guard only fires on agreement)
-    # For test rows we use the text columns of the mixed prediction directly.
+    # The keyword guard needs the text-ensemble confidence on the *test* rows:
+    # mean softmax over the four text branches (BanglaBERT ×2, MuRIL, PL-MuRIL),
+    # matching the notebook's `text_ens` definition.
     text_tests = [np.load(A / f"test_{n}.npy")
                   for n in ("banglabert_base", "banglabert_multi", "muril_large", "pl_muril")]
     text_mean = np.mean(text_tests, axis=0)  # (N, 8)
@@ -120,7 +117,8 @@ def apply_rules(logits: np.ndarray, test_df: pd.DataFrame,
 
 
 def run(test_csv: str, out_csv: str = "results/tables/submission.csv",
-        corrections_csv: str = "results/tables/applied_corrections.csv"):
+        corrections_csv: str = "results/tables/applied_corrections.csv",
+        sample_submission_csv: str | None = None):
     """Full pipeline: load OOFs → fit ensemble → apply to test → rules → CSV."""
     print("Loading OOF arrays …")
     y = pd.read_csv("data/folds/folds_canonical.csv",
@@ -143,9 +141,11 @@ def run(test_csv: str, out_csv: str = "results/tables/submission.csv",
     pred = apply_rules(logits, test_df,
                        corrections_csv=Path(corrections_csv))
 
-    sub = make_submission(test_df["image_id"], pred, out_csv)
-    print(f"Submission written → {out_csv}  ({len(sub)} rows)")
-    print(f"Label distribution:\n{sub[SUBMISSION_LABEL_COLUMN].value_counts().to_string()}")
+    sub = make_submission(test_df["image_id"], pred, out_csv,
+                          sample_submission_csv=sample_submission_csv)
+    label_col = [c for c in sub.columns if c != "image_id"][0]
+    print(f"Submission written → {out_csv}  ({len(sub)} rows, label col '{label_col}')")
+    print(f"Label distribution:\n{sub[label_col].value_counts().to_string()}")
     return sub
 
 
@@ -156,5 +156,8 @@ if __name__ == "__main__":
     parser.add_argument("--out", default="results/tables/submission.csv")
     parser.add_argument("--corrections",
                         default="results/tables/applied_corrections.csv")
+    parser.add_argument("--sample-submission", default=None,
+                        help="Auto-detect the label column from this file "
+                             "(handles category vs categry)")
     args = parser.parse_args()
-    run(args.test_csv, args.out, args.corrections)
+    run(args.test_csv, args.out, args.corrections, args.sample_submission)

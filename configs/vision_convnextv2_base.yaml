@@ -1,12 +1,18 @@
-name: vision_convnextv2_base
-modality: image
-model_name: convnextv2_base.fcmae_ft_in22k_in1k_384  # confirm from notebook
-image_size: 384
-drop_path_rate: 0.10
-tta_views: 5
-loss: {type: focal_label_smoothing, gamma: 2.0, smoothing: 0.05}
-optimizer: {type: adamw, lr_backbone: 1.0e-5, lr_head: 5.0e-4, weight_decay: 0.01}
-scheduler: {type: cosine, warmup_ratio: 0.10}
-train: {epochs: 6, micro_batch: 8, grad_accum: 4, amp: true}
-folds: data/folds/folds_canonical.csv
-oof_out: artifacts/oof_convnextv2_base.npy
+# ConvNeXt V2-base @384 image branch (5-view TTA at inference).
+tag:          img_convnextv2_384
+modality:     image
+img_model:    convnextv2_base.fcmae_ft_in22k_in1k_384
+img_size:     384
+drop_path:    0.10
+tta_views:    5
+batch_size:   8
+grad_accum:   4
+epochs:       6
+lr_image:     1.0e-5
+lr_head:      5.0e-4
+weight_decay: 0.01
+warmup_ratio: 0.10
+label_smooth: 0.05
+gamma:        2.0
+seed:         42
+oof_out:      artifacts/oof_convnextv2_base.npy

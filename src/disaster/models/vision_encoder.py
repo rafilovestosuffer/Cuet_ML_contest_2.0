@@ -1,7 +1,12 @@
+# RECONSTRUCTED REFERENCE IMPLEMENTATION — generated from specification.
+# This is NOT the original training code and is NOT verified to reproduce the
+# released OOF arrays. Reconcile with the author's original notebooks.
+
 """timm backbone + linear head.
 
-RECONSTRUCTED FROM PAPER SPEC — confirm the exact timm model strings from your
-notebooks (EVA-02-Large @448, ConvNeXt V2-base @384).
+Confirmed timm strings (from the notebook):
+  * convnextv2_base.fcmae_ft_in22k_in1k_384   (ConvNeXt V2-base @384)
+  * eva02_large_patch14_448.mim_m38m_ft_in22k_in1k   (EVA-02-Large @448)
 """
 import torch.nn as nn
 

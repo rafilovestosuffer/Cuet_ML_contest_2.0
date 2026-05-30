@@ -1,12 +1,19 @@
-name: text_banglabert_multi
-modality: text
-model_name: TODO_CONFIRM_FROM_NOTEBOOK   # BanglishBERT? mBERT? XLM-R?
-max_len: 256
-pooling: mean
-loss: {type: focal_label_smoothing, gamma: 2.0, smoothing: 0.05}
-optimizer: {type: adamw, lr_backbone: 8.0e-6, lr_head: 5.0e-4, weight_decay: 0.01}
-scheduler: {type: cosine, warmup_ratio: 0.10}
-train: {epochs: 4, micro_batch: 8, grad_accum: 4, amp: true}
-folds: data/folds/folds_canonical.csv
-seeds: [42]
-oof_out: artifacts/oof_banglabert_multi.npy
+# BanglaBERT multilingual / bilingual text branch.
+# TODO: confirm the exact checkpoint from the original text-branch notebook
+# (likely csebuetnlp/banglishbert or bert-base-multilingual-cased).
+tag:          text_bbmulti
+modality:     text
+text_model:   csebuetnlp/banglishbert   # TODO_CONFIRM
+max_len:      256
+pooling:      mean
+batch_size:   8
+grad_accum:   4
+epochs:       4
+lr_text:      8.0e-6
+lr_head:      5.0e-4
+weight_decay: 0.01
+warmup_ratio: 0.10
+label_smooth: 0.05
+gamma:        2.0
+seeds:        [42]
+oof_out:      artifacts/oof_banglabert_multi.npy

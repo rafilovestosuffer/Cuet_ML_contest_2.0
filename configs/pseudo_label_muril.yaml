@@ -1,5 +1,18 @@
-name: pseudo_label_muril
-modality: text
-base_model: google/muril-large-cased
+# PL-MuRIL: pseudo-label test rows (softmax-max >= 0.95) as hard labels,
+# then re-fine-tune MuRIL on gold + pseudo.
+tag:                  pl_muril
+modality:             text
+text_model:           google/muril-large-cased
+max_len:              256
 confidence_threshold: 0.95
-oof_out: artifacts/oof_pl_muril.npy
+batch_size:           4
+grad_accum:           8
+epochs:               4
+lr_text:              8.0e-6
+lr_head:              5.0e-4
+weight_decay:         0.01
+warmup_ratio:         0.10
+label_smooth:         0.05
+gamma:                2.0
+seed:                 42
+oof_out:              artifacts/oof_pl_muril.npy

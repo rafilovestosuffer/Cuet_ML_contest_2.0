@@ -1,5 +1,6 @@
 """Dataset exploratory analysis used to generate the paper's EDA section."""
 import re
+
 import pandas as pd
 
 EMOJI_RE = re.compile(

@@ -1,39 +1,90 @@
-"""Text-anchored cross-attention fusion (JointMM).
+# TRANSCRIBED FROM notebooks/Final_notebook.ipynb — the `JointMM` class below is
+# the original cross-attention fusion model, copied faithfully. `LateFusion` is a
+# RECONSTRUCTED baseline (from spec) provided so the late-vs-cross-attention
+# ablation is runnable; it is not from the notebook and was not used in the paper.
 
-RECONSTRUCTED FROM PAPER SPEC — reconcile with your original notebook before use.
+"""Text-anchored cross-attention fusion (JointMM) + late-fusion baseline.
 
-Image encoder -> v (1024); MuRIL pooled -> t (1024). Both projected to d_f=512.
-Text is the Query, image the Key/Value into 8-head attention. The classifier
-sees concat[attn_out, text_proj]. A `late_fusion` baseline is also provided so
-the ablation (late vs cross-attention) is reproducible.
+JointMM (faithful):
+  * Image encoder (timm) → v ∈ R^img_dim;  text encoder (HF) mean-pooled → t ∈ R^text_dim.
+  * Both projected to d_f=512 via Linear→LayerNorm→GELU.
+  * Text is the Query, image the Key/Value into 8-head MultiheadAttention.
+  * classifier sees concat[attn_out, text_proj(t)] → LayerNorm → Dropout(0.2) → Linear(8).
+
+The same class covers both backbone variants by config:
+  * ConvNeXt V2-base @384 × MuRIL-Large  (img_dim=1024)  — the notebook's final run
+  * EVA-02-Large @448 × MuRIL-Large      (img_dim=1024)  — the `oof_fusion_eva_muril` artifact
 """
 import torch
 import torch.nn as nn
 
+try:
+    import timm
+    from transformers import AutoModel
+except ImportError:  # pragma: no cover
+    timm = None
+    AutoModel = None
 
-class CrossAttentionFusion(nn.Module):
-    def __init__(self, text_dim=1024, img_dim=1024, d_f=512, n_heads=8,
-                 num_classes=8, dropout=0.1):
+
+class JointMM(nn.Module):
+    """End-to-end cross-attention multimodal classifier (from the notebook)."""
+
+    def __init__(self, cfg: dict, n_cls: int = 8):
         super().__init__()
-        self.text_proj = nn.Sequential(nn.LayerNorm(text_dim),
-                                       nn.Linear(text_dim, d_f), nn.GELU())
-        self.img_proj = nn.Sequential(nn.LayerNorm(img_dim),
-                                      nn.Linear(img_dim, d_f), nn.GELU())
-        self.attn = nn.MultiheadAttention(d_f, n_heads, batch_first=True)
-        self.head = nn.Sequential(nn.LayerNorm(2 * d_f), nn.Dropout(dropout),
-                                  nn.Linear(2 * d_f, num_classes))
+        assert timm is not None and AutoModel is not None, \
+            "pip install timm transformers"
 
-    def forward(self, text_feat, img_feat):
-        q = self.text_proj(text_feat).unsqueeze(1)   # (B,1,d_f)
-        kv = self.img_proj(img_feat).unsqueeze(1)     # (B,1,d_f)
-        a, _ = self.attn(q, kv, kv)                   # text queries image
-        z = torch.cat([a.squeeze(1), q.squeeze(1)], dim=-1)
-        return self.head(z)
+        # Image encoder — fine-tuned, with gradient checkpointing.
+        self.img_enc = timm.create_model(
+            cfg["img_model"], pretrained=True, num_classes=0,
+            drop_path_rate=cfg.get("drop_path", 0.10),
+        )
+        if hasattr(self.img_enc, "set_grad_checkpointing"):
+            try:
+                self.img_enc.set_grad_checkpointing(enable=True)
+            except Exception:
+                pass
+
+        # Text encoder — fine-tuned.
+        self.text_enc = AutoModel.from_pretrained(cfg["text_model"])
+        if hasattr(self.text_enc, "gradient_checkpointing_enable"):
+            self.text_enc.gradient_checkpointing_enable()
+
+        fd = cfg["fusion_dim"]
+        self.img_proj = nn.Sequential(
+            nn.LayerNorm(cfg["img_dim"]), nn.Linear(cfg["img_dim"], fd), nn.GELU())
+        self.text_proj = nn.Sequential(
+            nn.LayerNorm(cfg["text_dim"]), nn.Linear(cfg["text_dim"], fd), nn.GELU())
+        self.cross_attn = nn.MultiheadAttention(
+            fd, cfg["n_heads"], dropout=0.1, batch_first=True)
+        self.classifier = nn.Sequential(
+            nn.LayerNorm(fd * 2), nn.Dropout(0.2), nn.Linear(fd * 2, n_cls))
+
+    def forward(self, image, input_ids, attention_mask, token_type_ids=None):
+        img_f = self.img_enc(image)  # (B, img_dim)
+
+        kw = dict(input_ids=input_ids, attention_mask=attention_mask)
+        if token_type_ids is not None:
+            kw["token_type_ids"] = token_type_ids
+        t_out = self.text_enc(**kw).last_hidden_state
+        m = attention_mask.unsqueeze(-1).float()
+        txt_f = (t_out * m).sum(1) / m.sum(1).clamp(min=1e-9)  # masked mean pool
+
+        img_q = self.img_proj(img_f).unsqueeze(1)
+        txt_q = self.text_proj(txt_f).unsqueeze(1)
+        attn_out, _ = self.cross_attn(query=txt_q, key=img_q, value=img_q)
+        fused = torch.cat([attn_out.squeeze(1), self.text_proj(txt_f)], dim=-1)
+        return self.classifier(fused)
 
 
 class LateFusion(nn.Module):
-    """Baseline: weighted average of independent text/image posteriors."""
-    def __init__(self, alpha=0.5):
+    """RECONSTRUCTED baseline: weighted average of independent posteriors.
+
+    Provided only for the late-vs-cross-attention ablation; not used in the
+    paper's submitted pipeline.
+    """
+
+    def __init__(self, alpha: float = 0.5):
         super().__init__()
         self.alpha = alpha
 

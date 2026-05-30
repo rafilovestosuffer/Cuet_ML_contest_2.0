@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "disaster"
+version = "1.0.0"
+description = "Text-dominant multimodal ensemble for 8-class Bengali disaster classification (CUET ML Contest 2.0)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Rafiur Rahman" }]
+keywords = ["multimodal", "bengali-nlp", "disaster-classification", "ensembling"]
+
+[project.urls]
+Repository = "https://github.com/rafilovestosuffer/Cuet_ML_contest_2.0"
+
+# src/ layout: the importable package is src/disaster
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "slow: end-to-end reproduction tests (full blend search + bootstrap; minutes)",
+    "needs_artifacts: requires the frozen .npy arrays in artifacts/",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # long lines are tolerated in docstrings/tables

@@ -1,10 +1,14 @@
+# RECONSTRUCTED REFERENCE IMPLEMENTATION — generated from specification.
+# This is NOT the original training code and is NOT verified to reproduce the
+# released OOF arrays. Reconcile with the author's original notebooks.
+
 """HuggingFace encoder + masked mean pooling + linear head.
 
-RECONSTRUCTED FROM PAPER SPEC — confirm the exact checkpoint IDs from your
-notebooks. Defaults: csebuetnlp/banglabert, google/muril-large-cased.
-The multilingual variant ('bb_multi') MUST be confirmed (TODO).
+Confirmed checkpoint (from the notebook): google/muril-large-cased.
+Text-branch checkpoints are not shown in the final notebook; defaults follow the
+spec: csebuetnlp/banglabert (base) and a multilingual variant
+(TODO: confirm — likely csebuetnlp/banglishbert or bert-base-multilingual-cased).
 """
-import torch
 import torch.nn as nn
 
 try:

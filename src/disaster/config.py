@@ -1,5 +1,6 @@
 """Minimal YAML -> dict config loader."""
 from pathlib import Path
+
 import yaml
 
 

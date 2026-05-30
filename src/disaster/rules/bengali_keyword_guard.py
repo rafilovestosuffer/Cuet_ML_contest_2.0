@@ -14,7 +14,6 @@ This conservative triple guard changed only 3 predictions on the contest test
 set, out of 182 (wildfire) + 158 (drought) raw keyword hits.
 """
 import re
-from disaster.labels import LABEL2IDX
 
 # "[hazard] + por" == after the <hazard>
 AFTERMATH_RE = re.compile(r"(দাবানলের|খরার|বন্যার|ঝড়ের|ভূমিকম্পের)\s*পর")

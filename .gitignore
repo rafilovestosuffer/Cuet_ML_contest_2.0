@@ -1,25 +1,34 @@
-# Secrets & creds
+# Secrets & credentials
 kaggle.json
 .env
 *.key
-# Data (do NOT commit raw dataset; download via data/README.md)
+
+# Raw dataset — download via data/README.md; never commit images or CSVs
 data/raw/
 data/Train/
 data/Test/
 *.jpg
 *.jpeg
 *.png
-!results/figures/*.png
-# Model weights & large artifacts (use Git LFS or GitHub Releases)
+*.JPG
+*.PNG
+
+# Model weights & large frozen artifacts (distribute via Git LFS / GitHub Release)
 *.pth
 *.pt
 *.ckpt
 *.bin
 *.safetensors
 artifacts/*.npy
+
+# Generated outputs — reproducible via `make figures` / `make reproduce`
+results/figures/
+results/tables/
+
 # Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
 venv/
 .ipynb_checkpoints/
@@ -27,10 +36,14 @@ venv/
 dist/
 build/
 *.egg-info/
+*.egg
+
 # OS / editor
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
-# Claude Code local context (build prompt + local settings; not part of the published repo)
+
+# Claude Code local context (not part of the published repo)
 CLAUDE.md
 .claude/

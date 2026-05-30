@@ -4,7 +4,6 @@ NOTE: On the contest test set these glyphs occur in ~1 row, so this rule is a
 low-risk safeguard rather than a meaningful contributor. Kept for completeness
 and transparency; every change is logged by the caller.
 """
-from disaster.labels import LABEL2IDX
 
 EMOJI_TO_LABEL = {
     "📍": "Non Disaster", "😍": "Non Disaster", "🥰": "Non Disaster",

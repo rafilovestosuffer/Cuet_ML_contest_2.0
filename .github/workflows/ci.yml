@@ -1,15 +1,26 @@
 name: ci
+
 on: [push, pull_request]
+
 jobs:
-  test:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.10"}
-      - name: Install minimal deps
-        run: pip install numpy pandas scikit-learn scipy pyyaml pytest
-      - name: Lint (syntax)
-        run: python -m compileall src scripts tests
-      - name: Fold integrity test
-        run: PYTHONPATH=src python -m pytest tests/test_folds.py -q
+        with:
+          python-version: "3.10"
+
+      - name: Install lint + light runtime deps
+        run: |
+          pip install --upgrade pip
+          pip install ruff numpy pandas scikit-learn scipy pyyaml pytest
+
+      - name: Ruff lint
+        run: ruff check src scripts tests
+
+      - name: Byte-compile (syntax check, all modules incl. torch-dependent)
+        run: python -m compileall -q src scripts tests
+
+      - name: Run tests (artifact-dependent tests auto-skip without .npy)
+        run: pytest -v -m "not slow"
